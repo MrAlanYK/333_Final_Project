@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Intensity Explorer</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 12px;
+            background: #ffffff;
+            font-size: 14px;
+        }
+        h1 {
+            text-align: center;
+            margin: 8px 0;
+        }
+        .metric-card, .viz-container, .filter-panel {
+            border: 1px solid #ccc;
+        }
+        .metric-card, .viz-container {
+            padding: 8px;
+        }
+        .filter-panel {
+            padding: 10px;
+            background: #f8f8f8;
+            margin-bottom: 10px;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 12px;
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .filter-section {
+            margin-bottom: 8px;
+        }
+        .filter-section label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+        input[type="range"], select {
+            width: 100%;
+        }
+        button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 6px;
+        }
+        .main-content {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .metric-value {
+            font-size: 18px;
+        }
+        .viz-container {
+            margin-bottom: 10px;
+        }
+        .viz-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .secondary-viz {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .secondary-viz.half-split {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .tooltip {
+            position: absolute;
+            background: #111;
+            color: #fff;
+            padding: 4px;
+            font-size: 12px;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+        #exercise-table {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        #loading {
+            text-align: center;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Training Intensity Explorer</h1>
+
+    <div id="loading">Loading data...</div>
+
+    <div id="app" style="display: none;">
+        <div class="dashboard">
+            <!-- Filter Panel -->
+            <div class="filter-panel">
+                <h2 style="margin-bottom: 15px; font-size: 18px;">Filters</h2>
+
+                <div class="filter-section">
+                    <label>Age Range: <span id="age-range-value">18 - 60</span></label>
+                    <div class="range-slider">
+                        <input type="range" id="age-min" min="18" max="60" value="18">
+                        <input type="range" id="age-max" min="18" max="60" value="60">
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <label>Gender:</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" class="gender-filter" value="Male" checked> Male</label>
+                        <label><input type="checkbox" class="gender-filter" value="Female" checked> Female</label>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <label>Workout Type:</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" class="workout-filter" value="HIIT" checked> HIIT</label>
+                        <label><input type="checkbox" class="workout-filter" value="Strength" checked> Strength</label>
+                        <label><input type="checkbox" class="workout-filter" value="Cardio" checked> Cardio</label>
+                        <label><input type="checkbox" class="workout-filter" value="Yoga" checked> Yoga</label>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <label for="experience-filter">Experience Level:</label>
+                    <select id="experience-filter">
+                        <option value="All">All</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+                </div>
+
+                <div class="filter-section">
+                    <label>
+                        <input type="checkbox" id="sampling-toggle" checked>
+                        Sample Data (2000 points)
+                    </label>
+                </div>
+
+                <button id="reset-filters">Reset All Filters</button>
+
+                <div style="margin-top: 15px; padding: 10px; background: #f0f0f0; font-size: 12px;">
+                    <div>Total Records: <span id="total-count">0</span></div>
+                    <div>Filtered: <span id="filtered-count">0</span></div>
+                    <div>Selected: <span id="selected-count">0</span></div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Metric Cards -->
+                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-label">Average Calories</div>
+                        <div class="metric-value" id="avg-calories">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Average Intensity</div>
+                        <div class="metric-value" id="avg-intensity">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Average Duration</div>
+                        <div class="metric-value" id="avg-duration">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Workout Count</div>
+                        <div class="metric-value" id="workout-count">-</div>
+                    </div>
+                </div>
+
+                <!-- Primary Visualization: Scatter Plot -->
+                <div class="viz-container">
+                    <div class="viz-title">Duration vs Calories Burned (Brush to Select)</div>
+                    <div id="scatter-plot"></div>
+                </div>
+
+                <!-- Secondary Visualizations -->
+                <div class="secondary-viz">
+                    <div class="viz-container">
+                        <div class="viz-title">Performance by Workout Type</div>
+                        <div id="bar-chart"></div>
+                    </div>
+                    <div class="viz-container">
+                        <div class="viz-title">Heart Rate Zones Distribution</div>
+                        <div id="donut-chart"></div>
+                    </div>
+                    <div class="viz-container">
+                        <div class="viz-title">Age & Performance by Gender</div>
+                        <div id="line-chart"></div>
+                    </div>
+                </div>
+
+                <!-- Violin Plot -->
+                <div class="secondary-viz half-split">
+                    <div class="viz-container">
+                        <div class="viz-title">Distribution Violin Plot (Calories, Duration, Intensity)</div>
+                        <div id="violin-plot"></div>
+                    </div>
+                    <div class="viz-container">
+                        <div class="viz-title">Exercise Effectiveness</div>
+                        <div id="exercise-table"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
