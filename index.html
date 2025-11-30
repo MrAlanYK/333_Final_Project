@@ -128,6 +128,14 @@
                 </div>
 
                 <div class="filter-section">
+                    <label>BMI Range: <span id="bmi-range-value">15 - 40</span></label>
+                    <div class="range-slider">
+                        <input type="range" id="bmi-min" min="15" max="40" value="15">
+                        <input type="range" id="bmi-max" min="15" max="40" value="40">
+                    </div>
+                </div>
+
+                <div class="filter-section">
                     <label>Gender:</label>
                     <div class="checkbox-group">
                         <label><input type="checkbox" class="gender-filter" value="Male" checked> Male</label>
@@ -155,12 +163,13 @@
                     </select>
                 </div>
 
-                <div class="filter-section">
+                <!-- Sampling toggle disabled for now -->
+                <!-- <div class="filter-section">
                     <label>
                         <input type="checkbox" id="sampling-toggle" checked>
                         Sample Data (2000 points)
                     </label>
-                </div>
+                </div> -->
 
                 <button id="reset-filters">Reset All Filters</button>
 
