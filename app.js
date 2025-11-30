@@ -96,7 +96,7 @@ d3.csv('Final_data.csv').then(function(data) {
             intensity: +d.pct_HRR * 100,
             bmi: +d.BMI,
             experienceLevel: mapExperienceLevel(d.Experience_Level),
-            exerciseName: d['Name of Exercise'],
+            workoutName: d['Name of Exercise'],
             targetMuscle: d['Target Muscle Group'],
             difficulty: d.Difficulty_Level,
             equipment: d.Equipment_Needed,
@@ -741,53 +741,44 @@ function updateExerciseTable() {
 
     var exerciseMap = new Map();
     data.forEach(function(d) {
-        if (!exerciseMap.has(d.exerciseName)) {
-            exerciseMap.set(d.exerciseName, {
-                name: d.exerciseName,
+        var key = d.workoutName || 'Unknown';
+        if (!exerciseMap.has(key)) {
+            exerciseMap.set(key, {
+                name: key,
                 calories: d.calories / (d.duration * 2),
                 muscle: d.targetMuscle,
                 count: 1,
                 typeCounts: new Map([[d.workoutType, 1]])
             });
-        } else {
-            var existing = exerciseMap.get(d.exerciseName);
-            existing.calories = (existing.calories * existing.count + d.calories / (d.duration * 2)) / (existing.count + 1);
-            existing.count++;
-            existing.typeCounts.set(d.workoutType, (existing.typeCounts.get(d.workoutType) || 0) + 1);
+            return;
         }
+
+        var existing = exerciseMap.get(key);
+        existing.calories = (existing.calories * existing.count + d.calories / (d.duration * 2)) / (existing.count + 1);
+        existing.count++;
+        existing.typeCounts.set(d.workoutType, (existing.typeCounts.get(d.workoutType) || 0) + 1);
     });
 
     var exerciseData = [];
     exerciseMap.forEach(function(entry) {
-        var topType = 'N/A';
-        var topCount = -1;
-        entry.typeCounts.forEach(function(count, key) {
-            if (count > topCount) {
-                topCount = count;
-                topType = key;
-            }
-        });
         exerciseData.push({
             name: entry.name,
             calories: entry.calories,
-            muscle: entry.muscle,
-            workoutType: topType
+            muscle: entry.muscle
         });
     });
 
     exerciseData.sort(function(a, b) { return b.calories - a.calories; });
 
     var html = '<table><thead><tr>' +
-        '<th>Exercise Name</th>' +
-        '<th>Workout Type</th>' +
+        '<th>Workout Name</th>' +
         '<th>Cal/30min</th>' +
-        '<th>Muscle Group</th>' +
+        '<th>Target Muscle Group</th>' +
         '</tr></thead><tbody>';
 
     exerciseData.forEach(function(d) {
         html += '<tr>' +
             '<td>' + d.name + '</td>' +
-            '<td>' + d.workoutType + '</td>' +
             '<td>' + Math.round(d.calories) + '</td>' +
             '<td>' + d.muscle + '</td>' +
             '</tr>';
