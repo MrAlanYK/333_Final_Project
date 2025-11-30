@@ -96,10 +96,10 @@ d3.csv('Final_data.csv').then(function(data) {
             intensity: +d.pct_HRR * 100,
             bmi: +d.BMI,
             experienceLevel: mapExperienceLevel(d.Experience_Level),
-            workoutName: d['Name of Exercise'],
+            workoutName: d.Workout || d['Workout'],
             targetMuscle: d['Target Muscle Group'],
             difficulty: d.Difficulty_Level,
-            equipment: d.Equipment_Needed,
+            equipment: d['Equipment Needed'],
             restingBPM: +d['Resting_BPM'],
             maxBPM: +d['Max_BPM']
         };
@@ -746,7 +746,7 @@ function updateExerciseTable() {
             exerciseMap.set(key, {
                 name: key,
                 calories: d.calories / (d.duration * 2),
-                muscle: d.targetMuscle,
+                equipment: d.equipment,
                 count: 1,
                 typeCounts: new Map([[d.workoutType, 1]])
             });
@@ -764,7 +764,7 @@ function updateExerciseTable() {
         exerciseData.push({
             name: entry.name,
             calories: entry.calories,
-            muscle: entry.muscle
+            equipment: entry.equipment
         });
     });
 
@@ -773,14 +773,14 @@ function updateExerciseTable() {
     var html = '<table><thead><tr>' +
         '<th>Workout Name</th>' +
         '<th>Cal/30min</th>' +
-        '<th>Target Muscle Group</th>' +
+        '<th>Equipment Needed</th>' +
         '</tr></thead><tbody>';
 
     exerciseData.forEach(function(d) {
         html += '<tr>' +
             '<td>' + d.name + '</td>' +
             '<td>' + Math.round(d.calories) + '</td>' +
-            '<td>' + d.muscle + '</td>' +
+            '<td>' + d.equipment + '</td>' +
             '</tr>';
     });
 
