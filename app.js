@@ -2,7 +2,9 @@
 var allData = [];
 var filteredData = [];
 var selectedData = [];
-var samplingEnabled = true;
+// var samplingEnabled = true; // sampling disabled for now
+var samplingEnabled = false;
+var bmiRangeDefaults = {min: 15, max: 40};
 
 function mapExperienceLevel(val) {
     var num = parseFloat(val);
@@ -29,6 +31,25 @@ function syncAgeRange(changedId) {
     }
 
     document.getElementById('age-range-value').textContent = minVal + ' - ' + maxVal;
+}
+
+function syncBmiRange(changedId) {
+    var bmiMinEl = document.getElementById('bmi-min');
+    var bmiMaxEl = document.getElementById('bmi-max');
+    var minVal = +bmiMinEl.value;
+    var maxVal = +bmiMaxEl.value;
+
+    if (minVal > maxVal) {
+        if (changedId === 'bmi-min') {
+            maxVal = minVal;
+            bmiMaxEl.value = maxVal;
+        } else {
+            minVal = maxVal;
+            bmiMinEl.value = minVal;
+        }
+    }
+
+    document.getElementById('bmi-range-value').textContent = minVal + ' - ' + maxVal;
 }
 
 function getBaseData() {
@@ -85,12 +106,33 @@ d3.csv('Final_data.csv').then(function(data) {
     });
 
     filteredData = allData;
+    setBmiSliderBounds();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
 
     setupFilters();
     updateAllViews();
 });
+
+function setBmiSliderBounds() {
+    if (!allData.length) return;
+
+    var extent = d3.extent(allData, function(d) { return d.bmi; });
+    var minVal = Math.floor(extent[0]);
+    var maxVal = Math.ceil(extent[1]);
+    bmiRangeDefaults = {min: minVal, max: maxVal};
+
+    var bmiMinEl = document.getElementById('bmi-min');
+    var bmiMaxEl = document.getElementById('bmi-max');
+
+    bmiMinEl.min = minVal;
+    bmiMaxEl.min = minVal;
+    bmiMinEl.max = maxVal;
+    bmiMaxEl.max = maxVal;
+    bmiMinEl.value = minVal;
+    bmiMaxEl.value = maxVal;
+    syncBmiRange();
+}
 
 function setupFilters() {
     document.getElementById('age-min').addEventListener('input', function() {
@@ -112,20 +154,33 @@ function setupFilters() {
 
     document.getElementById('experience-filter').addEventListener('change', applyFilters);
 
-    document.getElementById('sampling-toggle').addEventListener('change', function() {
-        samplingEnabled = this.checked;
-        selectedData = [];
-        updateAllViews();
+    document.getElementById('bmi-min').addEventListener('input', function() {
+        syncBmiRange('bmi-min');
+        applyFilters();
     });
+    document.getElementById('bmi-max').addEventListener('input', function() {
+        syncBmiRange('bmi-max');
+        applyFilters();
+    });
+
+    // Sampling toggle disabled for now
+    // document.getElementById('sampling-toggle').addEventListener('change', function() {
+    //     samplingEnabled = this.checked;
+    //     selectedData = [];
+    //     updateAllViews();
+    // });
 
     document.getElementById('reset-filters').addEventListener('click', resetFilters);
 
     syncAgeRange();
+    syncBmiRange();
 }
 
 function applyFilters() {
     var ageMin = +document.getElementById('age-min').value;
     var ageMax = +document.getElementById('age-max').value;
+    var bmiMin = +document.getElementById('bmi-min').value;
+    var bmiMax = +document.getElementById('bmi-max').value;
 
     var genders = [];
     document.querySelectorAll('.gender-filter:checked').forEach(function(cb) {
@@ -140,6 +195,7 @@ function applyFilters() {
 
     filteredData = allData.filter(function(d) {
         return d.age >= ageMin && d.age <= ageMax &&
+               d.bmi >= bmiMin && d.bmi <= bmiMax &&
                genders.includes(d.gender) &&
                workoutTypes.includes(d.workoutType) &&
                (experience === 'All' || d.experienceLevel === experience);
@@ -159,7 +215,10 @@ function resetFilters() {
         cb.checked = true;
     });
     document.getElementById('experience-filter').value = 'All';
+    document.getElementById('bmi-min').value = bmiRangeDefaults.min;
+    document.getElementById('bmi-max').value = bmiRangeDefaults.max;
     syncAgeRange();
+    syncBmiRange();
     applyFilters();
 }
 
