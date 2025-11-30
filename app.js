@@ -875,12 +875,10 @@ function updateViolinPlot() {
             .attr('stroke', 'black')
             .attr('stroke-width', 2);
 
-        if (i === 0) {
-            svg.append('g')
-                .attr('class', 'axis')
-                .attr('transform', 'translate(' + (xPos - violinWidth / 2 - 10) + ', 0)')
-                .call(d3.axisLeft(yScale).ticks(5));
-        }
+        svg.append('g')
+            .attr('class', 'axis')
+            .attr('transform', 'translate(' + (xPos - violinWidth / 2 - 10) + ', 0)')
+            .call(d3.axisLeft(yScale).ticks(4));
 
         svg.append('text')
             .attr('x', xPos)
