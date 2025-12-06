@@ -2,7 +2,6 @@
 var allData = [];
 var filteredData = [];
 var selectedData = [];
-// var samplingEnabled = true; // sampling disabled for now
 var samplingEnabled = false;
 var bmiRangeDefaults = {min: 15, max: 40};
 
@@ -162,13 +161,6 @@ function setupFilters() {
         syncBmiRange('bmi-max');
         applyFilters();
     });
-
-    // Sampling toggle disabled for now
-    // document.getElementById('sampling-toggle').addEventListener('change', function() {
-    //     samplingEnabled = this.checked;
-    //     selectedData = [];
-    //     updateAllViews();
-    // });
 
     document.getElementById('reset-filters').addEventListener('click', resetFilters);
 
